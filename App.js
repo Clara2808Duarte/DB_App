@@ -138,20 +138,39 @@ function AdicionarFuncionario() {
     </ScrollView>
   );
 }
-
 // ----------------- Componente 4: Pesquisar Funcionário -----------------
 function PesquisarFuncionario() {
-  const [pesquisa, setPesquisa] = useState('');
+  const [nomeCargo, setNomeCargo] = useState('');
+  const [salarioMinimo, setSalarioMinimo] = useState('');
   const [resultados, setResultados] = useState([]);
 
   const pesquisarFuncionario = async () => {
     try {
       const db = await getDb();
-      const [txResult] = await db.execAsync(
-        'SELECT * FROM funcionarios WHERE nome LIKE ?;',
-        [`%${pesquisa}%`]
-      );
+      let query = 'SELECT * FROM funcionarios WHERE 1=1';
+      const params = [];
+
+      // Adiciona filtro por nome ou cargo
+      if (nomeCargo.trim()) {
+        query += ' AND (nome LIKE ? OR cargo LIKE ?)';
+        params.push(`%${nomeCargo}%`, `%${nomeCargo}%`);
+      }
+
+      // Adiciona filtro por salário mínimo
+      if (salarioMinimo.trim()) {
+        const minSalario = parseFloat(salarioMinimo);
+        if (!isNaN(minSalario)) {
+          query += ' AND salario >= ?';
+          params.push(minSalario);
+        }
+      }
+
+      const [txResult] = await db.execAsync(query, params);
       setResultados(txResult.rows._array);
+
+      if (txResult.rows._array.length === 0) {
+        Alert.alert('Aviso', 'Nenhum funcionário encontrado.');
+      }
     } catch (error) {
       console.error(error);
       Alert.alert('Erro', 'Falha na pesquisa.');
@@ -163,9 +182,16 @@ function PesquisarFuncionario() {
       <Text style={styles.title}>Pesquisar Funcionário</Text>
       <TextInput
         style={styles.input}
-        placeholder="Digite o nome"
-        value={pesquisa}
-        onChangeText={setPesquisa}
+        placeholder="Nome ou Cargo"
+        value={nomeCargo}
+        onChangeText={setNomeCargo}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Salário Mínimo"
+        keyboardType="numeric"
+        value={salarioMinimo}
+        onChangeText={setSalarioMinimo}
       />
       <TouchableOpacity style={styles.botao} onPress={pesquisarFuncionario}>
         <Text style={styles.textoBotao}>Pesquisar</Text>
@@ -185,6 +211,7 @@ function PesquisarFuncionario() {
     </View>
   );
 }
+
 
 // ----------------- Drawer Navigator -----------------
 const Drawer = createDrawerNavigator();
