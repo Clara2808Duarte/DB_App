@@ -1,6 +1,14 @@
 //Inserir Dados na Tabela
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, Alert, ScrollView } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  Button,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
 let db = null;
@@ -24,8 +32,11 @@ export default function App() {
 
     try {
       const conn = await openDb();
-      await conn.runAsync('INSERT INTO funcionarios (nome, salario, cargo) values (?, ?, ?);', [nome, parseFloat(salario), cargo]);
-      
+      await conn.runAsync(
+        'INSERT INTO funcionarios (nome, salario, cargo) values (?, ?, ?);',
+        [nome, parseFloat(salario), cargo]
+      );
+
       Alert.alert('Sucesso', 'Funcionário adicionado com sucesso!');
       setNome('');
       setSalario('');

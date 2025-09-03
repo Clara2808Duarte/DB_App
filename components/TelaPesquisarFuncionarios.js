@@ -44,10 +44,10 @@ export default function App() {
             cargo TEXT NOT NULL
           );
         `);
-        setStatus('✅ Banco de dados e tabela prontos!');
+        setStatus('Banco de dados e tabela prontos!');
       } catch (error) {
         console.error('Erro ao conectar ou criar tabela:', error);
-        setStatus('❌ Erro ao inicializar o banco de dados. Veja o log.');
+        setStatus('Erro ao inicializar o banco de dados. Veja o log.');
         Alert.alert('Erro', 'Não foi possível conectar ao banco de dados.');
       }
     }

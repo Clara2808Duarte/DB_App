@@ -1,10 +1,12 @@
 //Criar um banco
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 
 export default function App() {
-  const [status, setStatus] = useState('Verificando conexão com o banco de dados...');
+  const [status, setStatus] = useState(
+    'Verificando conexão com o banco de dados...'
+  );
 
   useEffect(() => {
     async function testarConexao() {
@@ -13,10 +15,12 @@ export default function App() {
         // Comando simples para testar a conexão sem criar tabelas
         await db.execAsync('PRAGMA user_version;');
         // PRAGMA é uma palavra chave de controle do SQLITE
-        setStatus('✅ Conexão com o banco de dados estabelecida com sucesso!');
+        setStatus('Conexão com o banco de dados estabelecida com sucesso!');
       } catch (error) {
         console.error('Erro na conexão:', error);
-        setStatus('❌ Erro ao conectar com o banco de dados. Veja o log para mais detalhes.');
+        setStatus(
+          'Erro ao conectar com o banco de dados. Veja o log para mais detalhes.'
+        );
       }
     }
     testarConexao();

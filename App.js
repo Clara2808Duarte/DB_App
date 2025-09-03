@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,10 +34,10 @@ function TesteConexao() {
       try {
         const db = await getDb();
         await db.execAsync('PRAGMA user_version;');
-        setStatus('✅ Conexão com o banco de dados estabelecida com sucesso!');
+        setStatus('Conexão com o banco de dados estabelecida com sucesso! ');
       } catch (error) {
         console.error(error);
-        setStatus('❌ Erro ao conectar com o banco de dados.');
+        setStatus('Erro ao conectar com o banco de dados.');
       }
     }
     testarConexao();
@@ -66,11 +66,11 @@ function CriarTabela() {
           cargo TEXT NOT NULL
         );
       `);
-      setMensagem('✅ Tabela "funcionarios" criada com sucesso!');
+      setMensagem('Tabela "funcionarios" criada com sucesso!');
       Alert.alert('Sucesso', 'Tabela "funcionarios" criada!');
     } catch (error) {
       console.error(error);
-      setMensagem('❌ Erro ao criar a tabela.');
+      setMensagem('Erro ao criar a tabela.');
       Alert.alert('Erro', 'Falha ao criar a tabela.');
     }
   };
@@ -138,7 +138,8 @@ function AdicionarFuncionario() {
     </ScrollView>
   );
 }
-// ----------------- Componente 4: Pesquisar Funcionário -----------------
+// ----------------- Componente 4: Pesquisar Funcionário ----------------
+
 function PesquisarFuncionario() {
   const [nomeCargo, setNomeCargo] = useState('');
   const [salarioMinimo, setSalarioMinimo] = useState('');
@@ -165,10 +166,10 @@ function PesquisarFuncionario() {
         }
       }
 
-      const [txResult] = await db.execAsync(query, params);
-      setResultados(txResult.rows._array);
+      const resultadosDb = await db.getAllAsync(query, params);
+      setResultados(resultadosDb);
 
-      if (txResult.rows._array.length === 0) {
+      if (resultadosDb.length === 0) {
         Alert.alert('Aviso', 'Nenhum funcionário encontrado.');
       }
     } catch (error) {
@@ -202,16 +203,15 @@ function PesquisarFuncionario() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text>👤 {item.nome}</Text>
-            <Text>💼 {item.cargo}</Text>
-            <Text>💰 R$ {item.salario}</Text>
+            <Text>{item.nome}</Text>
+            <Text>{item.cargo}</Text>
+            <Text>R$ {item.salario}</Text>
           </View>
         )}
       />
     </View>
   );
 }
-
 
 // ----------------- Drawer Navigator -----------------
 const Drawer = createDrawerNavigator();
