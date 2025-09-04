@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// Importa hooks do React e componentes básicos do React Native
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,34 +11,51 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+
+// Importa SQLite do Expo
 import * as SQLite from 'expo-sqlite';
+
+// Importa navegação
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 
-// Função para retornar instância única do banco
+
+// ===============================================================
+// FUNÇÃO DE ACESSO AO BANCO (Singleton)
+// ===============================================================
+
+// Guardamos a instância do banco em uma variável global
 let dbInstance = null;
+
+// Função que retorna sempre a mesma instância
 async function getDb() {
   if (!dbInstance) {
+    // Abre ou cria o banco "meu_banco.db"
     dbInstance = await SQLite.openDatabaseAsync('meu_banco.db');
   }
   return dbInstance;
 }
 
-// ----------------- Componente 1: Teste Conexão -----------------
+
+// ===============================================================
+// COMPONENTE 1 - Testar Conexão
+// ===============================================================
 function TesteConexao() {
+  // Estado para armazenar a mensagem de status
   const [status, setStatus] = useState(
     'Verificando conexão com o banco de dados...'
   );
 
+  // Executa apenas 1x quando a tela abre
   useEffect(() => {
     async function testarConexao() {
       try {
-        const db = await getDb();
-        await db.execAsync('PRAGMA user_version;');
-        setStatus('✅ Conexão com o banco de dados estabelecida com sucesso!');
+        const db = await getDb(); // pega instância do banco
+        await db.execAsync('PRAGMA user_version;'); // executa comando simples
+        setStatus('Conexão com o banco de dados estabelecida com sucesso! ✅');
       } catch (error) {
         console.error(error);
-        setStatus('❌ Erro ao conectar com o banco de dados.');
+        setStatus('Erro ao conectar com o banco de dados ❌');
       }
     }
     testarConexao();
@@ -51,13 +69,18 @@ function TesteConexao() {
   );
 }
 
-// ----------------- Componente 2: Criar Tabela -----------------
+
+// ===============================================================
+// COMPONENTE 2 - Criar Tabela
+// ===============================================================
 function CriarTabela() {
   const [mensagem, setMensagem] = useState('Inicializando o banco de dados...');
 
+  // Função que cria a tabela no banco
   const criarTabela = async () => {
     try {
       const db = await getDb();
+      // Cria tabela se não existir
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS funcionarios (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,11 +89,11 @@ function CriarTabela() {
           cargo TEXT NOT NULL
         );
       `);
-      setMensagem('✅ Tabela "funcionarios" criada com sucesso!');
+      setMensagem('Tabela "funcionarios" criada com sucesso!');
       Alert.alert('Sucesso', 'Tabela "funcionarios" criada!');
     } catch (error) {
       console.error(error);
-      setMensagem('❌ Erro ao criar a tabela.');
+      setMensagem('Erro ao criar a tabela.');
       Alert.alert('Erro', 'Falha ao criar a tabela.');
     }
   };
@@ -84,12 +107,17 @@ function CriarTabela() {
   );
 }
 
-// ----------------- Componente 3: Adicionar Funcionário -----------------
+
+// ===============================================================
+// COMPONENTE 3 - Adicionar Funcionário
+// ===============================================================
 function AdicionarFuncionario() {
+  // Estados para armazenar os valores digitados
   const [nome, setNome] = useState('');
   const [salario, setSalario] = useState('');
   const [cargo, setCargo] = useState('');
 
+  // Função que insere funcionário no banco
   const adicionarFuncionario = async () => {
     if (!nome.trim() || !salario.trim() || !cargo.trim()) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
@@ -103,6 +131,7 @@ function AdicionarFuncionario() {
         [nome, parseFloat(salario), cargo]
       );
       Alert.alert('Sucesso', 'Funcionário adicionado com sucesso!');
+      // Limpa os campos
       setNome('');
       setSalario('');
       setCargo('');
@@ -138,25 +167,34 @@ function AdicionarFuncionario() {
     </ScrollView>
   );
 }
-// ----------------- Componente 4: Pesquisar Funcionário -----------------
+
+
+// ===============================================================
+// COMPONENTE 4 - Pesquisar Funcionário
+// ===============================================================
 function PesquisarFuncionario() {
+  // Estados para filtros
   const [nomeCargo, setNomeCargo] = useState('');
   const [salarioMinimo, setSalarioMinimo] = useState('');
+  // Estado que guarda os resultados da pesquisa
   const [resultados, setResultados] = useState([]);
 
+  // Função de pesquisa
   const pesquisarFuncionario = async () => {
     try {
       const db = await getDb();
+
+      // Monta query base
       let query = 'SELECT * FROM funcionarios WHERE 1=1';
       const params = [];
 
-      // Adiciona filtro por nome ou cargo
+      // Filtro por nome ou cargo
       if (nomeCargo.trim()) {
         query += ' AND (nome LIKE ? OR cargo LIKE ?)';
         params.push(`%${nomeCargo}%`, `%${nomeCargo}%`);
       }
 
-      // Adiciona filtro por salário mínimo
+      // Filtro por salário mínimo
       if (salarioMinimo.trim()) {
         const minSalario = parseFloat(salarioMinimo);
         if (!isNaN(minSalario)) {
@@ -165,10 +203,12 @@ function PesquisarFuncionario() {
         }
       }
 
-      const [txResult] = await db.execAsync(query, params);
-      setResultados(txResult.rows._array);
+      // Executa a pesquisa
+      const resultadosDb = await db.getAllAsync(query, params);
+      setResultados(resultadosDb);
 
-      if (txResult.rows._array.length === 0) {
+      // Se não achar nada
+      if (resultadosDb.length === 0) {
         Alert.alert('Aviso', 'Nenhum funcionário encontrado.');
       }
     } catch (error) {
@@ -193,10 +233,13 @@ function PesquisarFuncionario() {
         value={salarioMinimo}
         onChangeText={setSalarioMinimo}
       />
+
+      {/* Botão para iniciar pesquisa */}
       <TouchableOpacity style={styles.botao} onPress={pesquisarFuncionario}>
         <Text style={styles.textoBotao}>Pesquisar</Text>
       </TouchableOpacity>
 
+      {/* Lista com os resultados */}
       <FlatList
         data={resultados}
         keyExtractor={(item) => item.id.toString()}
@@ -213,7 +256,9 @@ function PesquisarFuncionario() {
 }
 
 
-// ----------------- Drawer Navigator -----------------
+// ===============================================================
+// CONFIGURAÇÃO DO MENU (Drawer Navigation)
+// ===============================================================
 const Drawer = createDrawerNavigator();
 
 export default function App() {
@@ -222,20 +267,17 @@ export default function App() {
       <Drawer.Navigator initialRouteName="Teste de Conexão">
         <Drawer.Screen name="Teste de Conexão" component={TesteConexao} />
         <Drawer.Screen name="Criar Tabela" component={CriarTabela} />
-        <Drawer.Screen
-          name="Adicionar Funcionário"
-          component={AdicionarFuncionario}
-        />
-        <Drawer.Screen
-          name="Pesquisar Funcionário"
-          component={PesquisarFuncionario}
-        />
+        <Drawer.Screen name="Adicionar Funcionário" component={AdicionarFuncionario} />
+        <Drawer.Screen name="Pesquisar Funcionário" component={PesquisarFuncionario} />
       </Drawer.Navigator>
     </NavigationContainer>
   );
 }
 
-// ----------------- Estilos -----------------
+
+// ===============================================================
+// ESTILOS
+// ===============================================================
 const styles = StyleSheet.create({
   container: {
     flex: 1,

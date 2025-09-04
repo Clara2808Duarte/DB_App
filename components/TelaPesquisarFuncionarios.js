@@ -1,4 +1,4 @@
-// Pesquisa a tabela de funcionários por argumentos diferentes
+// Importa os hooks do React e os componentes do React Native
 import { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -9,33 +9,35 @@ import {
   FlatList,
   Alert,
 } from 'react-native';
+
+// Importa o SQLite do Expo
 import * as SQLite from 'expo-sqlite';
 
 export default function App() {
-  // Estado para armazenar a conexão com o banco de dados
+  // Estado que armazena a conexão com o banco
   const [db, setDb] = useState(null);
 
-  // Estado para armazenar os resultados da consulta
+  // Estado que guarda os resultados das pesquisas
   const [results, setResults] = useState([]);
 
-  // Estados para os campos de pesquisa
-  const [searchText, setSearchText] = useState('');
-  const [salarioMinimo, setSalarioMinimo] = useState('');
+  // Campos de pesquisa
+  const [searchText, setSearchText] = useState(''); // Nome ou cargo
+  const [salarioMinimo, setSalarioMinimo] = useState(''); // Salário mínimo
 
-  // Estado para a mensagem de status (opcional, mas útil para feedback)
+  // Texto de status para feedback ao usuário
   const [status, setStatus] = useState('Inicializando...');
 
-  // --- Efeito para inicializar o banco de dados uma única vez ---
+  // --- useEffect roda apenas uma vez ao abrir o app ---
   useEffect(() => {
     async function setupDatabase() {
       try {
-        // Abrindo o banco de dados de forma segura
+        // Abre (ou cria) o banco de dados de forma assíncrona
         const database = await SQLite.openDatabaseAsync('meu_banco.db');
 
-        // Armazenando a referência do banco de dados no estado
+        // Salva a referência no estado
         setDb(database);
 
-        // Opcional: Criar a tabela se ela ainda não existir
+        // Cria a tabela "funcionarios" se ela não existir
         await database.execAsync(`
           CREATE TABLE IF NOT EXISTS funcionarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,41 +46,45 @@ export default function App() {
             cargo TEXT NOT NULL
           );
         `);
-        setStatus('✅ Banco de dados e tabela prontos!');
+
+        setStatus('Banco de dados e tabela prontos!');
       } catch (error) {
         console.error('Erro ao conectar ou criar tabela:', error);
-        setStatus('❌ Erro ao inicializar o banco de dados. Veja o log.');
-        Alert.alert('Erro', 'Não foi possível conectar ao banco de dados.');
+        setStatus('Erro ao inicializar o banco de dados.');
+        Alert.alert('Erro', 'Não foi possível conectar ao banco.');
       }
     }
-    // Chamando a função de setup
-    setupDatabase();
-  }, []); // O array vazio garante que isso rode apenas na primeira renderização
 
-  // --- Função genérica para executar consultas ---
+    // Chama a função de setup
+    setupDatabase();
+  }, []); // Executa só uma vez na montagem
+
+  // --- Função genérica para executar SELECT ---
   const executarConsulta = async (query, params = []) => {
-    // Acessando a conexão do estado e verificando se ela existe
     if (!db) {
-      Alert.alert('Erro', 'O banco de dados não está pronto.');
+      Alert.alert('Erro', 'O banco ainda não está pronto.');
       return;
     }
 
     try {
+      // Executa a query e retorna todas as linhas
       const rows = await db.getAllAsync(query, params);
+
+      // Salva os resultados no estado
       setResults(rows);
+
+      // Caso não ache nada, mostra alerta
       if (rows.length === 0) {
         Alert.alert('Aviso', 'Nenhum resultado encontrado.');
       }
     } catch (error) {
-      Alert.alert('Erro', 'Falha na consulta. Verifique o console.');
       console.error('Erro na consulta:', error);
+      Alert.alert('Erro', 'Falha ao executar a pesquisa.');
     }
   };
 
-  // --- Funções de consulta específicas ---
-
+  // --- Consultas específicas ---
   const exibirTodos = async () => {
-    // Chamando a função genérica com a query para todos os funcionários
     await executarConsulta('SELECT * FROM funcionarios;');
   };
 
@@ -87,7 +93,6 @@ export default function App() {
       Alert.alert('Aviso', 'Digite um nome para pesquisar.');
       return;
     }
-    // Usando LIKE e o parâmetro `?` para evitar SQL Injection
     await executarConsulta('SELECT * FROM funcionarios WHERE nome LIKE ?;', [
       `%${searchText}%`,
     ]);
@@ -99,7 +104,6 @@ export default function App() {
       Alert.alert('Aviso', 'Digite um número válido para o salário.');
       return;
     }
-    // Pesquisando por salários maiores ou iguais ao valor informado
     await executarConsulta('SELECT * FROM funcionarios WHERE salario >= ?;', [
       minSalario,
     ]);
@@ -110,12 +114,12 @@ export default function App() {
       Alert.alert('Aviso', 'Digite um cargo para pesquisar.');
       return;
     }
-    // Usando LIKE para pesquisar o cargo
     await executarConsulta('SELECT * FROM funcionarios WHERE cargo LIKE ?;', [
       `%${searchText}%`,
     ]);
   };
 
+  // --- Renderiza cada item do FlatList ---
   const renderItem = ({ item }) => (
     <View style={styles.item}>
       <Text>ID: {item.id}</Text>
@@ -125,11 +129,15 @@ export default function App() {
     </View>
   );
 
+  // --- Layout principal ---
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Consultar Funcionários</Text>
-      <Text style={styles.statusText}>{status}</Text>{' '}
-      {/* Exibindo o status da conexão */}
+
+      {/* Mostra status da conexão */}
+      <Text style={styles.statusText}>{status}</Text>
+
+      {/* Inputs de pesquisa */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.input}
@@ -145,8 +153,9 @@ export default function App() {
           onChangeText={setSalarioMinimo}
         />
       </View>
+
+      {/* Botões de ação */}
       <View style={styles.buttonContainer}>
-        {/* Desabilitando os botões se a conexão não estiver pronta */}
         <Button title="Exibir Todos" onPress={exibirTodos} disabled={!db} />
         <Button title="Pesquisar Nome" onPress={pesquisarNome} disabled={!db} />
         <Button
@@ -160,6 +169,8 @@ export default function App() {
           disabled={!db}
         />
       </View>
+
+      {/* Lista de resultados */}
       <FlatList
         style={styles.list}
         data={results}
@@ -170,6 +181,7 @@ export default function App() {
   );
 }
 
+// --- Estilos ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,

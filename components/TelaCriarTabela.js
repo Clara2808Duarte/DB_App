@@ -13,10 +13,10 @@ export default function App() {
       try {
         const database = await SQLite.openDatabaseAsync('meu_banco.db');
         setDb(database);
-        setMensagem('✅ Conexão com o banco de dados estabelecida.');
+        setMensagem(' Conexão com o banco de dados estabelecida.');
       } catch (error) {
         console.error('Erro ao conectar com o banco de dados:', error);
-        setMensagem('❌ Erro ao conectar com o banco de dados.');
+        setMensagem('Erro ao conectar com o banco de dados.');
       }
     }
     setupDatabase();
@@ -25,7 +25,7 @@ export default function App() {
   const criarTabela = async () => {
     // Verifica se a referência ao banco de dados existe antes de tentar usá-la
     if (!db) {
-      setMensagem('❌ O banco de dados não está pronto.');
+      setMensagem('O banco de dados não está pronto.');
       Alert.alert('Erro', 'Banco de dados não foi inicializado.');
       return;
     }
@@ -39,19 +39,23 @@ export default function App() {
           cargo TEXT NOT NULL
         );
       `);
-      setMensagem('✅ Tabela "funcionarios" criada com sucesso!');
+      setMensagem('Tabela "funcionarios" criada com sucesso!');
       Alert.alert('Sucesso', 'Tabela "funcionarios" criada!');
     } catch (error) {
       console.error('Erro ao criar tabela:', error);
-      setMensagem('❌ Erro ao criar a tabela. Veja o log.');
+      setMensagem('Erro ao criar a tabela. Veja o log.');
       Alert.alert('Erro', 'Falha ao criar a tabela.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Criar Tabela no Banco de Dados</Text>
-      <Button title="Criar Tabela Funcionários" onPress={criarTabela} disabled={!db} />
+      <Text style={styles.title}>Criar Tabela</Text>
+      <Button
+        title="Criar Tabela Funcionários"
+        onPress={criarTabela}
+        disabled={!db}
+      />
       <Text style={styles.statusText}>{mensagem}</Text>
     </View>
   );
